@@ -21,8 +21,10 @@
 #define PI 3.14159
 #define var 0.9216
 #define NT 512
-#define warmups 10000
-#define measure 10000
+#define beta_max 1.0
+#define gamma 1.0
+//#define warmups 10000
+//#define measure 10000
 
 static unsigned long mt[N]; /* the array for the state vector  */
 static int mti=N+1; /* mti==N+1 means mt[N] is not initialized */
@@ -83,6 +85,7 @@ genrand()
 
 //Ising potential with interpolated BCs. Might need to switch to periodic.
 double ising(double x[NT][NT], int i, int j){
+  /*
   if(i == 0){
     if(j == 0){
       if(x[0][1] == x[1][0]){
@@ -135,16 +138,16 @@ double ising(double x[NT][NT], int i, int j){
     }
     return x[i-1][NT-1] + x[i+1][NT-1] + x[i][NT-2] - 1.0;
   }
-  return x[i-1][j] + x[i+1][j] + x[i][j-1] +
-         x[i][j+1];
+  */
+  return x[i][j]*(x[i-1][j] + x[i+1][j] + x[i][j-1] + x[i][j+1]);
 }
 
 double gaussian(double x[NT][NT], double y[NT][NT], int i, int j){
-  return invvar*(y[i][j] - x[i][j])*(y[i][j] - x[i][j]);
+  return y[i][j]*x[i][j];
 }
 
 double energy(double x[NT][NT], double y[NT][NT], int i, int j, double beta){
-  return gaussian(x, y, i, j) - beta*ising(x, i, j);
+  return (-beta*gaussian(x, y, i, j) - beta*gamma*ising(x, i, j));
 }
 
 int main(int argc, char* argv[]){
@@ -154,6 +157,8 @@ int main(int argc, char* argv[]){
   double avg[NT][NT];
   double d_action;
   double temp;
+  double naccept;
+  double nreject;
 
   ////////*******NEED TO WRITE I/O CODE HERE********////////
   if( argc != 3 ) {
@@ -161,7 +166,7 @@ int main(int argc, char* argv[]){
     return 0;
   }
 
-  double beta = strtod(argv[1],NULL);
+  int nbeta = atoi(argv[1]);
 
   FILE *f = fopen(argv[2], "r");
   for(unsigned int i = 0; i < NT; ++i) {
@@ -174,60 +179,44 @@ int main(int argc, char* argv[]){
   //Start X in noisy configuration Y
   for(int i = 0; i < NT; i++){
     for(int j = 0; j < NT; j++){
-      x[i][j] = 1.0;
+      x[i][j] = y[i][j];
       avg[i][j] = 0.0;
     }
   }
 
-  //Monte Carlo Warmup Sweeps
-  for(int count = 0; count < warmups; count++){
-    //Flip pixel spins and accept/reject based on relative actions.
-    for(int i = 0; i < NT; i++){
-      for(int j = 0; j < NT; j++){
-        x[i][j] *= -1.0;
-        d_action = energy(x,y,i,j,beta);
-        x[i][j] *= -1.0;
-        d_action -= energy(x,y,i,j,beta);
-        if(d_action < 0 || exp(-d_action) > genrand()){
-          x[i][j] *= -1.0;
-        }
-      }
-    }
-  }
-
   //Monte Carlo Measurement Sweeps
-  for(int count = 0; count < measure; count++){
+  double beta = beta_max/nbeta;
+  for(int count = 0; count < nbeta; count++){
+    naccept = 0.0;
+    nreject = 0.0;
     //Flip pixel spins and accept/reject based on relative actions.
-    for(int i = 0; i < NT; i++){
-      for(int j = 0; j < NT; j++){
+    for(int i = 1; i < NT-1; i++){
+      for(int j = 1; j < NT-1; j++){
         x[i][j] *= -1.0;
         d_action = energy(x,y,i,j,beta);
         x[i][j] *= -1.0;
         d_action -= energy(x,y,i,j,beta);
         if(d_action < 0 || exp(-d_action) > genrand()){
           x[i][j] *= -1.0;
+          naccept += 1.0;
         }
+        else nreject += 1.0;
       }
     }
-    if((count+1) % 100 == 0){
-      for(int i = 0; i < NT; i++){
-        for(int j = 0; j < NT; j++){
-          avg[i][j] += x[i][j];
-        }
-      }
-    }
+    printf("%12.6f", naccept/(naccept + nreject));
+    beta += beta_max/nbeta;
   }
+  printf("\n");
 
   //Print most likely image
   for(int i = 0; i < NT; i++){
     for(int j = 0; j < NT; j++){
-      if(avg[i][j]/(measure/100.0) > 0.0){
+      //if(avg[i][j]/(measure/100.0) > 0.0){
+      if(x[i][j] > 0.0){
         printf("%12.6f", 1.0);
       }
-      else if(avg[i][j]/(measure/100.0) < 0.0){
-        printf("%12.6f", -1.0);
-      }
-      else printf("%12.6f", y[i][j]);
+      //else if(avg[i][j]/(measure/100.0) < 0.0){
+      else printf("%12.6f", -1.0);
     }
     printf("\n");
   }
