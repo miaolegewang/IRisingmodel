@@ -85,69 +85,68 @@ genrand()
 
 //Ising potential with interpolated BCs. Might need to switch to periodic.
 double ising(double x[NT][NT], int i, int j){
-  /*
   if(i == 0){
     if(j == 0){
       if(x[0][1] == x[1][0]){
-        return 4*x[0][0]*x[0][1];
+        return x[i][j]*(4*x[0][0]*x[0][1]);
       }
       else return 0;
     }
     else if(j == NT-1){
       if(x[0][NT-2] == x[1][NT-1]){
-        return 4*x[0][NT-2]*x[0][NT-1];
+        return x[i][j]*(4*x[0][NT-2]*x[0][NT-1]);
       }
       else return 0;
     }
     else{
       if(x[0][j-1] + x[0][j+1] + x[1][j] > 1.0){
-        return x[0][j-1] + x[0][j+1] + x[1][j] + 1.0;
+        return x[i][j]*(x[0][j-1] + x[0][j+1] + x[1][j] + 1.0);
       }
-      return x[0][j-1] + x[0][j+1] + x[1][j] - 1.0;
+      return x[i][j]*(x[0][j-1] + x[0][j+1] + x[1][j] - 1.0);
     }
   }
   else if(i == NT-1){
     if(j == 0){
       if(x[NT-1][1] == x[NT-2][0]){
-        return 4*x[NT-1][0]*x[NT-1][1];
+        return x[i][j]*(4*x[NT-1][0]*x[NT-1][1]);
       }
       else return 0;
     }
     else if(j == NT-1){
       if(x[NT-1][NT-2] == x[NT-2][NT-1]){
-        return 4*x[NT-1][NT-2]*x[NT-1][NT-1];
+        return x[i][j]*(4*x[NT-1][NT-2]*x[NT-1][NT-1]);
       }
       else return 0;
     }
     else{
       if(x[NT-1][j-1] + x[NT-1][j+1] + x[NT-2][j] > 1.0){
-        return x[NT-1][j-1] + x[NT-1][j+1] + x[NT-2][j] + 1.0;
+        return x[i][j]*(x[NT-1][j-1] + x[NT-1][j+1] + x[NT-2][j] + 1.0);
       }
-      return x[0][j-1] + x[0][j+1] + x[1][j] - 1.0;
+      return x[i][j]*(x[0][j-1] + x[0][j+1] + x[1][j] - 1.0);
     }
   }
   else if(j == 0){
     if(x[i-1][0] + x[i+1][0] + x[i][1] > 1.0){
-      return x[i-1][0] + x[i+1][0] + x[i][1] + 1.0;
+      return x[i][j]*(x[i-1][0] + x[i+1][0] + x[i][1] + 1.0);
     }
-    return x[i-1][0] + x[i+1][0] + x[i][1] - 1.0;
+    return x[i][j]*(x[i-1][0] + x[i+1][0] + x[i][1] - 1.0);
   }
   else if(j == NT-1){
     if(x[i-1][NT-1] + x[i+1][NT-1] + x[i][NT-2] > 1.0){
-      return x[i-1][NT-1] + x[i+1][NT-1] + x[i][NT-2] + 1.0;
+      return x[i][j]*(x[i-1][NT-1] + x[i+1][NT-1] + x[i][NT-2] + 1.0);
     }
-    return x[i-1][NT-1] + x[i+1][NT-1] + x[i][NT-2] - 1.0;
+    return x[i][j]*(x[i-1][NT-1] + x[i+1][NT-1] + x[i][NT-2] - 1.0);
   }
-  */
   return x[i][j]*(x[i-1][j] + x[i+1][j] + x[i][j-1] + x[i][j+1]);
 }
 
 double gaussian(double x[NT][NT], double y[NT][NT], int i, int j){
+  //return -0.42*(y[i][j] - x[i][j])*(y[i][j] - x[i][j]);
   return y[i][j]*x[i][j];
 }
 
 double energy(double x[NT][NT], double y[NT][NT], int i, int j, double beta){
-  return (-beta*gaussian(x, y, i, j) - beta*gamma*ising(x, i, j));
+  return (-gaussian(x, y, i, j) - beta*gamma*ising(x, i, j));
 }
 
 int main(int argc, char* argv[]){
@@ -190,8 +189,8 @@ int main(int argc, char* argv[]){
     naccept = 0.0;
     nreject = 0.0;
     //Flip pixel spins and accept/reject based on relative actions.
-    for(int i = 1; i < NT-1; i++){
-      for(int j = 1; j < NT-1; j++){
+    for(int i = 0; i < NT; i++){
+      for(int j = 0; j < NT; j++){
         x[i][j] *= -1.0;
         d_action = energy(x,y,i,j,beta);
         x[i][j] *= -1.0;
@@ -203,6 +202,20 @@ int main(int argc, char* argv[]){
         else nreject += 1.0;
       }
     }
+    /*
+    double weight = 0;
+    for(int i = 1; i < NT-1; i++){
+      for(int j = 1; j < NT-1; j++){
+        weight += energy(x,y,i,j,1.0);
+      }
+    }
+    */
+    for(int i = 0; i < NT; i++){
+      for(int j = 0; j < NT; j++){
+        //avg[i][j] += x[i][j]; //exp(-weight)*x[i][j];
+        avg[i][j] += beta*x[i][j];
+      }
+    }
     printf("%12.6f", naccept/(naccept + nreject));
     beta += beta_max/nbeta;
   }
@@ -212,11 +225,13 @@ int main(int argc, char* argv[]){
   for(int i = 0; i < NT; i++){
     for(int j = 0; j < NT; j++){
       //if(avg[i][j]/(measure/100.0) > 0.0){
-      if(x[i][j] > 0.0){
+      if(avg[i][j] > 0.0){
         printf("%12.6f", 1.0);
       }
-      //else if(avg[i][j]/(measure/100.0) < 0.0){
-      else printf("%12.6f", -1.0);
+      else if(avg[i][j] < 0.0){
+        printf("%12.6f", -1.0);
+      }
+      else printf("%12.6f", y[i][j]);
     }
     printf("\n");
   }
