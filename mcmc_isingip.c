@@ -20,8 +20,8 @@
 
 #define PI 3.14159
 #define var 0.9216
-#define NT 512
-#define beta_max 1.0
+#define NT 256 // 512
+#define beta_max 0.4 //0.5*log(4.0)
 #define gamma 1.0
 //#define warmups 10000
 //#define measure 10000
@@ -142,11 +142,12 @@ double ising(double x[NT][NT], int i, int j){
 
 double gaussian(double x[NT][NT], double y[NT][NT], int i, int j){
   //return -0.42*(y[i][j] - x[i][j])*(y[i][j] - x[i][j]);
-  return y[i][j]*x[i][j];
+  return beta_max*y[i][j]*x[i][j];
 }
 
 double energy(double x[NT][NT], double y[NT][NT], int i, int j, double beta){
-  return (-gaussian(x, y, i, j) - beta*gamma*ising(x, i, j));
+  return gaussian(x, y, i, j) + beta*gamma*ising(x, i, j);
+  //return (-gaussian(x, y, i, j) - beta*gamma*ising(x, i, j));
 }
 
 int main(int argc, char* argv[]){
@@ -195,7 +196,8 @@ int main(int argc, char* argv[]){
         d_action = energy(x,y,i,j,beta);
         x[i][j] *= -1.0;
         d_action -= energy(x,y,i,j,beta);
-        if(d_action < 0 || exp(-d_action) > genrand()){
+        if(d_action > 0 || exp(d_action) > genrand()){
+        //if(d_action < 0 || exp(-d_action) > genrand()){
           x[i][j] *= -1.0;
           naccept += 1.0;
         }
