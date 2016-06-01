@@ -1,7 +1,18 @@
 %% Binarize and add noise section
 
+% parameters to change
 imageDir = '';
-datafile = '';
+transferRatio = 0.5;
+
+dir = './images/'
+datafile = 'binary.dat';
+IM = imread(strcat(dir, imageDir));
+if size(IM, 3) == 3
+  [X, map] = rgb2ind(IM, 32);
+else
+  [X, map] = gray2ind(IM, 32);
+end
+BW = im2bw(X, map, transferRatio);
 
 % RGB = imread('img.png'); %GOOGLE G
 % [X,map] = rgb2ind(RGB,32); %GOOGLE G
@@ -48,11 +59,12 @@ for i = 1:height
         end
     end
 end
-dlmwrite(datafile,spins, '-append');
+dlmwrite(datafile, spins, '-append');
 
 
 %% Restore image from data
-A = dlmread('restored.txt');
+restoreIMPath = 'restored.txt';
+A = dlmread(restoreIMPath);
 [col, row] = size(A);
 A(2:height+1,1:length) = (A(2:height+1,1:length) + 1)/2;
 num_missed = sum(sum(abs(BW - A(2:height+1,1:length))))/(height * length);
