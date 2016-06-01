@@ -1,3 +1,10 @@
+/*
+ *  Things to try:
+ *  1.  intermediate sweeps: keep beta constant, do 10 sweeps and do average
+ *  2.  use cuda to have the optimal parameters set
+ */
+
+
 #include <math.h>
 #include <stdio.h>
 #include <string.h>

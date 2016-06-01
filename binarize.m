@@ -1,3 +1,8 @@
+%% Binarize and add noise section
+
+imageDir = '';
+datafile = '';
+
 % RGB = imread('img.png'); %GOOGLE G
 % [X,map] = rgb2ind(RGB,32); %GOOGLE G
 % BW = im2bw(X, map, 0.8); %GOOGLE G
@@ -14,12 +19,15 @@
 % [X,map] = gray2ind(Gray,32); %LENA
 % BW = im2bw(X, map, 0.06); %LENA
 
-%%%% ADD NOISE TO IMAGE %%%%
+% %%%% ADD NOISE TO IMAGE %%%%
 % imgSize=512
-imgSize = 256
-spins = zeros(imgSize);
-for i = 1:imgSize
-    for j = 1:imgSize
+[height, length] = size(BW);
+f = fopen(datafile, 'w');
+fprintf(f, '%d,%d\n', [height, length]);
+fclose(f);
+spins = zeros(height, length);
+for i = 1:height
+    for j = 1:length
         spins(i,j) = 2*BW(i,j) - 1;
         if rand(1,1) < 0.2
             spins(i,j) = -spins(i,j);
@@ -27,11 +35,11 @@ for i = 1:imgSize
     end
 end
 
-%%%% CONVERT NOISY SPINS TO IMAGE AND FILE OUTPUT %%%%
-newim = zeros(imgSize);
-for i = 1:imgSize
-    for j = 1:imgSize
-        if spins(i,j) >= 0 
+% %%%% CONVERT NOISY SPINS TO IMAGE AND FILE OUTPUT %%%%
+newim = zeros(height, length);
+for i = 1:height
+    for j = 1:length
+        if spins(i,j) >= 0
             spins(i,j) = 1;
             newim(i,j) = 1;
         else
@@ -40,13 +48,15 @@ for i = 1:imgSize
         end
     end
 end
-dlmwrite('spins.dat',spins);
+dlmwrite(datafile,spins, '-append');
 
+
+%% Restore image from data
 A = dlmread('restored.txt');
 [col, row] = size(A);
-A(2:imgSize+1,1:imgSize) = (A(2:imgSize+1,1:imgSize) + 1)/2;
-num_missed = sum(sum(abs(BW - A(2:imgSize+1,1:imgSize))))/(imgSize^2)
-flip_rate = sum(sum(abs(BW - newim)))/(imgSize^2)
+A(2:height+1,1:length) = (A(2:height+1,1:length) + 1)/2;
+num_missed = sum(sum(abs(BW - A(2:height+1,1:length))))/(height * length);
+flip_rate = sum(sum(abs(BW - newim)))/(height * length);
 
 f1 = figure(1);
 subplot(2,2,1)
@@ -58,7 +68,7 @@ imshow(newim);
 title('Noisy Image')
 
 subplot(2,2,3)
-imshow(A(2:imgSize+1,1:imgSize))
+imshow(A(2:height+1,1:length))
 title('Ising Model Restoration')
 
 subplot(2,2,4)
