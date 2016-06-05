@@ -1,11 +1,12 @@
 %% Binarize and add noise section
 
 % parameters to change
-imageDir = '';
+imageDir = 'target.png';
 transferRatio = 0.5;
 
 dir = './images/'
 datafile = 'binary.dat';
+originfile = 'origin.dat';
 IM = imread(strcat(dir, imageDir));
 if size(IM, 3) == 3
   [X, map] = rgb2ind(IM, 32);
@@ -36,6 +37,9 @@ BW = im2bw(X, map, transferRatio);
 f = fopen(datafile, 'w');
 fprintf(f, '%d,%d\n', [height, length]);
 fclose(f);
+f = fopen(originfile, 'w');
+fprintf(f, '%d,%d\n', [height, length]);
+fclose(f);
 spins = zeros(height, length);
 for i = 1:height
     for j = 1:length
@@ -60,6 +64,7 @@ for i = 1:height
     end
 end
 dlmwrite(datafile, spins, '-append');
+dlmwrite(originfile, BW, '-append');
 
 
 %% Restore image from data
