@@ -154,13 +154,13 @@ double gaussian(double **x, double **y, unsigned int i, unsigned int j){
 }
 
 double energy(double **x, double **y, int i, int j, double beta, int height, int width){
-  return gaussian(x, y, i, j) + beta*gamma*ising(x, i, j, height, width);
+  return beta*gamma*gaussian(x, y, i, j) + beta*ising(x, i, j, height, width);
   //return (-gaussian(x, y, i, j) - beta*gamma*ising(x, i, j));
 }
 
 int main(int argc, char* argv[]){
   ////////*******NEED TO WRITE I/O CODE HERE********////////
-  if( argc != 3 ) {
+  if( argc != 4 ) {
     printf("Invalid number of arguments! Please try running again.\n");
     return 0;
   }
@@ -169,16 +169,31 @@ int main(int argc, char* argv[]){
   int nbeta = atoi(argv[1]);
   unsigned int height, width;
 
+
+  // read original image (data file)
+  int miao;  // just try to get rid of warnings;
+  FILE *original = fopen(argv[3], "r");
+  miao = fscanf(original, "%u,%u\n", &height, &width);
+  double **origin = (double **)malloc(height * sizeof(double*));
+  for(unsigned int i = 0; i < height; i++){
+    origin[i] = (double*)malloc(width * sizeof(double));
+    for(unsigned int j = 0; j < width; j++){
+      miao = fscanf(original, "%lf", &origin[i][j]);
+    }
+  }
+  fclose(original);
+
   // read data from file
   FILE *f = fopen(argv[2], "r");
 
+
   // first line is the dimension of the images
-  int miao;  // just try to get rid of
   miao = fscanf(f, "%u,%u\n", &height, &width);
 
 
   // Initialize vectors and important values
   // Allocate memory for x, y and avg
+  double **blaizeFavoriteRestoredImage = (double **)malloc(height * sizeof(double*));
   double **x = (double**)malloc(height * sizeof(double*));
   double **y = (double**)malloc(height * sizeof(double*));
   double **avg = (double**)malloc(height * sizeof(double*));
@@ -186,11 +201,13 @@ int main(int argc, char* argv[]){
   double temp;
   double naccept;
   double nreject;
+  unsigned int LeastMissThatYouNeverHave = height * width;
 
   for(int i = 0; i < height; ++i) {
     x[i] = (double*)malloc(width * sizeof(double));
     y[i] = (double*)malloc(width * sizeof(double));
     avg[i] = (double*)malloc(width * sizeof(double));
+    blaizeFavoriteRestoredImage[i] = (double*)malloc(width * sizeof(double));
     for(int j = 0; j < width; ++j) {
       miao = fscanf(f, "%lf ", &y[i][j]);
     }
@@ -201,12 +218,14 @@ int main(int argc, char* argv[]){
   for(int i = 0; i < height; i++){
     for(int j = 0; j < width; j++){
       x[i][j] = y[i][j];
+      blaizeFavoriteRestoredImage[i][j] = y[i][j];
       avg[i][j] = 0.0;
     }
   }
 
   //Monte Carlo Measurement Sweeps
   double beta = beta_max / nbeta;
+  double bestBetaThatYouNeverHave = beta;
   for(int count = 0; count < nbeta; count++){
     naccept = 0.0;
     nreject = 0.0;
@@ -233,10 +252,22 @@ int main(int argc, char* argv[]){
       }
     }
     */
+    unsigned int tempMiss = 0;
     for(int i = 0; i < height; i++){
       for(int j = 0; j < width; j++){
         //avg[i][j] += x[i][j]; //exp(-weight)*x[i][j];
         avg[i][j] += beta * x[i][j];
+        if(x[i][j] != origin[i][j])
+          tempMiss++;
+      }
+    }
+    if(tempMiss < LeastMissThatYouNeverHave){
+      LeastMissThatYouNeverHave = tempMiss;
+      bestBetaThatYouNeverHave = beta;
+      for(unsigned int i = 0; i < height; i++){
+        for(unsigned int j = 0; j < width; j++){
+          blaizeFavoriteRestoredImage[i][j] = x[i][j];
+        }
       }
     }
     printf("%12.6f", naccept / (naccept + nreject));
@@ -248,16 +279,18 @@ int main(int argc, char* argv[]){
   for(int i = 0; i < height; i++){
     for(int j = 0; j < width; j++){
       //if(avg[i][j]/(measure/100.0) > 0.0){
-      if(avg[i][j] > 0.0){
-        printf("%12.6f", 1.0);
-      }
-      else if(avg[i][j] < 0.0){
-        printf("%12.6f", -1.0);
-      }
+      //if(avg[i][j] > 0.0){
+      //  printf("%12.6f", 1.0);
+      //}
+      //else if(avg[i][j] < 0.0){
+      //  printf("%12.6f", -1.0);
+      //}
       //else printf("%12.6f", y[i][j]);
+      printf("%12.6f", blaizeFavoriteRestoredImage[i][j]);
     }
     printf("\n");
   }
+  printf("%u, %12.6f\n", LeastMissThatYouNeverHave, bestBetaThatYouNeverHave);
 
 
   //  free the memory allocated
@@ -265,9 +298,11 @@ int main(int argc, char* argv[]){
     free(x[i]);
     free(y[i]);
     free(avg[i]);
+    free(origin[i]);
   }
   free(x);
   free(y);
   free(avg);
+  free(origin);
   return 1;
 }
