@@ -6,6 +6,7 @@
 #include <QTextStream>
 #include <QDebug>
 #include <QFileDialog>
+#include <QHBoxLayout>
 
 
 #define NT 512
@@ -48,9 +49,13 @@ private slots:
 
     void on_image_path_clicked();
 
+    void on_ratio_slider_valueChanged(int value);
+
 private:
     Ui::MainWindow *ui;
     bool autorun;
+    QImage *origin;
+    bool binary;
 
     void readImage();
 
@@ -58,8 +63,10 @@ private:
     double gaussian(int i, int j);
     double energy(int i, int j, double beta);
     void loadImage(QString filepath);
+    void gray2bin(int ratio);
     void addNoise();
     void imageRestore();
+    void renderOriginal();
     void renderNoisy();
     void renderRestoration();
     double getNoiseRatio(double x[NT][NT]) const;

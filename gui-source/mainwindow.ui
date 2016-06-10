@@ -6,19 +6,19 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1202</width>
-    <height>783</height>
+    <width>1281</width>
+    <height>784</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Image Restoration using Ising Model</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <widget class="QGroupBox" name="groupBox">
     <property name="geometry">
      <rect>
-      <x>520</x>
-      <y>640</y>
+      <x>560</x>
+      <y>630</y>
       <width>441</width>
       <height>80</height>
      </rect>
@@ -98,8 +98,8 @@ QGroupBox::title{
    <widget class="QGroupBox" name="groupBox_2">
     <property name="geometry">
      <rect>
-      <x>350</x>
-      <y>640</y>
+      <x>380</x>
+      <y>630</y>
       <width>151</width>
       <height>80</height>
      </rect>
@@ -153,8 +153,8 @@ QGroupBox::title{
    <widget class="QGroupBox" name="groupBox_3">
     <property name="geometry">
      <rect>
-      <x>980</x>
-      <y>640</y>
+      <x>1020</x>
+      <y>630</y>
       <width>191</width>
       <height>80</height>
      </rect>
@@ -231,8 +231,8 @@ QGroupBox::title{
    <widget class="QGroupBox" name="groupBox_4">
     <property name="geometry">
      <rect>
-      <x>20</x>
-      <y>640</y>
+      <x>40</x>
+      <y>630</y>
       <width>311</width>
       <height>81</height>
      </rect>
@@ -345,88 +345,10 @@ QGroupBox::title{
      </property>
     </widget>
    </widget>
-   <widget class="QGroupBox" name="groupBox_5">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>0</y>
-      <width>571</width>
-      <height>621</height>
-     </rect>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">QGroupBox {
-	border: 1px solid gray;
-	border-radius: 9px;
-	margin-top: 0.5em;
-}
-
-QGroupBox::title{
-	subcontrol-origin: margin;
-	left: 10px;
-	padding: 0 3px 0 3px;
-}</string>
-    </property>
-    <property name="title">
-     <string>Noisy Image</string>
-    </property>
-    <widget class="QLabel" name="noisy_image">
-     <property name="geometry">
-      <rect>
-       <x>30</x>
-       <y>30</y>
-       <width>512</width>
-       <height>512</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string/>
-     </property>
-    </widget>
-    <widget class="Line" name="line_2">
-     <property name="geometry">
-      <rect>
-       <x>20</x>
-       <y>570</y>
-       <width>521</width>
-       <height>16</height>
-      </rect>
-     </property>
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_3">
-     <property name="geometry">
-      <rect>
-       <x>20</x>
-       <y>590</y>
-       <width>91</width>
-       <height>17</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Noise Level:</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="original_noise_level">
-     <property name="geometry">
-      <rect>
-       <x>140</x>
-       <y>590</y>
-       <width>67</width>
-       <height>17</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string/>
-     </property>
-    </widget>
-   </widget>
    <widget class="QGroupBox" name="groupBox_6">
     <property name="geometry">
      <rect>
-      <x>620</x>
+      <x>700</x>
       <y>0</y>
       <width>570</width>
       <height>621</height>
@@ -501,22 +423,211 @@ QGroupBox::title{
      </property>
     </widget>
    </widget>
+   <widget class="QTabWidget" name="tabWidget">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>0</y>
+      <width>681</width>
+      <height>631</height>
+     </rect>
+    </property>
+    <property name="tabPosition">
+     <enum>QTabWidget::West</enum>
+    </property>
+    <property name="currentIndex">
+     <number>0</number>
+    </property>
+    <widget class="QWidget" name="tab">
+     <attribute name="title">
+      <string>Original Image</string>
+     </attribute>
+     <widget class="QGroupBox" name="groupBox_7">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>0</y>
+        <width>631</width>
+        <height>621</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QGroupBox {
+	border: 1px solid gray;
+	border-radius: 9px;
+	margin-top: 0.5em;
+}
+
+QGroupBox::title{
+	subcontrol-origin: margin;
+	left: 10px;
+	padding: 0 3px 0 3px;
+}</string>
+      </property>
+      <property name="title">
+       <string>Original Image</string>
+      </property>
+      <widget class="QLabel" name="original_image">
+       <property name="geometry">
+        <rect>
+         <x>60</x>
+         <y>30</y>
+         <width>512</width>
+         <height>512</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+      <widget class="Line" name="line_5">
+       <property name="geometry">
+        <rect>
+         <x>20</x>
+         <y>570</y>
+         <width>521</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_4">
+       <property name="geometry">
+        <rect>
+         <x>20</x>
+         <y>590</y>
+         <width>71</width>
+         <height>17</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>BW ratio</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="ratio_display">
+       <property name="geometry">
+        <rect>
+         <x>90</x>
+         <y>590</y>
+         <width>67</width>
+         <height>17</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+      <widget class="QSlider" name="ratio_slider">
+       <property name="geometry">
+        <rect>
+         <x>180</x>
+         <y>580</y>
+         <width>351</width>
+         <height>29</height>
+        </rect>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="tab_2">
+     <attribute name="title">
+      <string>Noisy Image</string>
+     </attribute>
+     <widget class="QGroupBox" name="groupBox_5">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>0</y>
+        <width>631</width>
+        <height>621</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QGroupBox {
+	border: 1px solid gray;
+	border-radius: 9px;
+	margin-top: 0.5em;
+}
+
+QGroupBox::title{
+	subcontrol-origin: margin;
+	left: 10px;
+	padding: 0 3px 0 3px;
+}</string>
+      </property>
+      <property name="title">
+       <string>Noisy Image</string>
+      </property>
+      <widget class="QLabel" name="noisy_image">
+       <property name="geometry">
+        <rect>
+         <x>60</x>
+         <y>30</y>
+         <width>512</width>
+         <height>512</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+      <widget class="Line" name="line_2">
+       <property name="geometry">
+        <rect>
+         <x>20</x>
+         <y>570</y>
+         <width>521</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_3">
+       <property name="geometry">
+        <rect>
+         <x>20</x>
+         <y>590</y>
+         <width>91</width>
+         <height>17</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Noise Level:</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="original_noise_level">
+       <property name="geometry">
+        <rect>
+         <x>140</x>
+         <y>590</y>
+         <width>67</width>
+         <height>17</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </widget>
+    </widget>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1202</width>
+     <width>1281</width>
      <height>25</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menuImage_Restoration">
-    <property name="title">
-     <string>Image Restoration using Ising Model</string>
-    </property>
-   </widget>
-   <addaction name="menuImage_Restoration"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -527,6 +638,11 @@ QGroupBox::title{
    </attribute>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
+  <action name="import_image">
+   <property name="text">
+    <string>Import File</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources/>
