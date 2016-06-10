@@ -179,7 +179,7 @@ QGroupBox::title{
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>20</y>
+       <y>50</y>
        <width>91</width>
        <height>22</height>
       </rect>
@@ -192,7 +192,7 @@ QGroupBox::title{
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>40</y>
+       <y>20</y>
        <width>91</width>
        <height>31</height>
       </rect>
@@ -496,20 +496,20 @@ QGroupBox::title{
       <widget class="QLabel" name="label_4">
        <property name="geometry">
         <rect>
-         <x>20</x>
+         <x>10</x>
          <y>590</y>
-         <width>71</width>
-         <height>17</height>
+         <width>101</width>
+         <height>20</height>
         </rect>
        </property>
        <property name="text">
-        <string>BW ratio</string>
+        <string>Black Balance</string>
        </property>
       </widget>
       <widget class="QLabel" name="ratio_display">
        <property name="geometry">
         <rect>
-         <x>90</x>
+         <x>130</x>
          <y>590</y>
          <width>67</width>
          <height>17</height>
@@ -522,7 +522,7 @@ QGroupBox::title{
       <widget class="QSlider" name="ratio_slider">
        <property name="geometry">
         <rect>
-         <x>180</x>
+         <x>210</x>
          <y>580</y>
          <width>351</width>
          <height>29</height>

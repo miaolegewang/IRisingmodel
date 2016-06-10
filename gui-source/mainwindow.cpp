@@ -13,19 +13,19 @@ MainWindow::MainWindow(QWidget *parent) :
     // Default setting
     //srand(time(NULL));
     gamma = 1.0;
-    nbeta = 100;
+    nbeta = 10;
     noiseLevel = 0.2;
     ui->setupUi(this);
 
     // Set default manual run instead of auto run
-    ui->manual_run_check->setChecked(true);
-    autorun = false;
+    ui->auto_run_check->setChecked(true);
+    autorun = true;
 
     ui->nbeta_box->setText(QString::number(nbeta));
     ui->gamma_box->setText(QString::number(gamma));
     ui->gamma_slider->setRange(0, 300);
     ui->gamma_slider->setValue(gamma * 100.0);
-    ui->noise_level_box->setRange(0.01, 0.8);
+    ui->noise_level_box->setRange(0.01, 0.4);
     ui->noise_level_box->setSingleStep(0.01);
     ui->noise_level_box->setValue(noiseLevel);
     ui->ratio_slider->setRange(0, 255);
@@ -83,37 +83,13 @@ void MainWindow::on_gamma_slider_sliderReleased()
 void MainWindow::loadImage(QString filepath){
     QFile file(filepath);
     if(file.exists()){
-        origin = new QImage(NT, NT, QImage::Format_Mono);
         QString filename = filepath.split("/").back();
         QString filetype = filename.split(".").back().toUpper();
-        if(filetype == "DAT" || filetype == "TXT"){
-            binary = true;
-            file.open(QIODevice::ReadOnly | QIODevice::Text);
-            int bin;
-            QTextStream in(&file);
-            unsigned int rowCount = 0;
-            while(!in.atEnd()){
-                QString line = in.readLine();
-                QStringList fields = line.split(",");
-                int boundary = NT < fields.size() ? NT : fields.size();
-                for(int j = 0; j < boundary; j++){
-                    image[rowCount][j] = fields.at(j).toDouble();
-                    bin = (image[rowCount][j] + 1) / 2;
-                    //qDebug() << image[rowCount][j];
-                    origin->setPixel(rowCount, j, bin);
-                }
-                rowCount++;
-                if(rowCount == 512)
-                    break;
-            }
-            file.close();
-        } else {
-            binary = false;
-            int bw_ratio = ui->ratio_slider->value();
-            origin =  new QImage(filepath, filetype.toStdString().c_str());
-            // transfer it to grayscale first
-            gray2bin(bw_ratio);
-        }
+        int bw_ratio = ui->ratio_slider->value();
+        QImage tmpImg(filepath, filetype.toStdString().c_str());
+        origin = new QImage(tmpImg.scaled(QSize(NT, NT)));
+        // transfer it to grayscale first
+        gray2bin(bw_ratio);
     } else {
         //qDebug() << "Error: file does not exists!";
     }
@@ -286,14 +262,16 @@ void MainWindow::on_add_noise_button_clicked()
     noiseLevel = ui->noise_level_box->value();
     addNoise();
     renderNoisy();
+    ui->tabWidget->setCurrentIndex(1);
 }
 
 void MainWindow::on_image_path_clicked()
 {
-    QString file = QFileDialog::getOpenFileName(this, tr("Select an image data file"), "./", tr("Data file and Image file (*.dat *.txt *.png *.PNG *.jpg *.JPG *.jpeg *.JPEG *.bmp)"));
+    QString file = QFileDialog::getOpenFileName(this, tr("Select an image data file"), "./", tr("Image files (*.png *.PNG *.jpg *.JPG *.jpeg *.JPEG *.bmp)"));
     ui->path_display->setText(file.split("/").back());
     loadImage(file);
     renderOriginal();
+    ui->tabWidget->setCurrentIndex(0);
     addNoise();
     renderNoisy();
 }
