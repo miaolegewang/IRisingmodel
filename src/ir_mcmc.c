@@ -1,10 +1,3 @@
-/*
- *  Things to try:
- *  1.  intermediate sweeps: keep beta constant, do 10 sweeps and do average
- *  2.  use cuda to have the optimal parameters set
- */
-
-
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
@@ -26,15 +19,11 @@
 #define TEMPERING_SHIFT_L(y)  (y >> 18)
 
 #define PI 3.14159
-#define var 0.9216
-#define beta_max 0.4 //0.5*log(4.0)
-#define gamma 1.0
-//#define warmups 10000
-//#define measure 10000
+#define NT 512
+#define beta_max 10.0
 
 static unsigned long mt[N]; /* the array for the state vector  */
 static int mti=N+1; /* mti==N+1 means mt[N] is not initialized */
-static double invvar = 1.0/2.0/var;
 
 /* Mersene Twister PRNG */
 /* initializing the array with a NONZERO seed */
@@ -89,220 +78,166 @@ genrand()
     /* return y; */ /* for integer generation */
 }
 
-
-
 //Ising potential with interpolated BCs. Might need to switch to periodic.
-double ising(double **x, int i, int j, unsigned int height, unsigned int width){
+double ising(double x[NT][NT], int i, int j){
   if(i == 0){
     if(j == 0){
       if(x[0][1] == x[1][0]){
-        return x[i][j] * (4 * x[0][0] * x[0][1]);
+        return x[i][j]*(4*x[0][0]*x[0][1]);
       }
       else return 0;
     }
-    else if(j == width - 1){
-      if(x[0][width - 2] == x[1][width - 1]){
-        return x[i][j] * (4 * x[0][width - 2] * x[0][width - 1]);
+    else if(j == NT-1){
+      if(x[0][NT-2] == x[1][NT-1]){
+        return x[i][j]*(4*x[0][NT-2]*x[0][NT-1]);
       }
       else return 0;
     }
     else{
-      if(x[0][j - 1] + x[0][j + 1] + x[1][j] > 1.0){
-        return x[i][j] * (x[0][j - 1] + x[0][j + 1] + x[1][j] + 1.0);
+      if(x[0][j-1] + x[0][j+1] + x[1][j] > 1.0){
+        return x[i][j]*(x[0][j-1] + x[0][j+1] + x[1][j] + 1.0);
       }
-      return x[i][j] * (x[0][j - 1] + x[0][j + 1] + x[1][j]  -  1.0);
+      return x[i][j]*(x[0][j-1] + x[0][j+1] + x[1][j] - 1.0);
     }
   }
-  else if(i == height - 1){
+  else if(i == NT-1){
     if(j == 0){
-      if(x[height - 1][1] == x[height - 2][0]){
-        return x[i][j] * (4 * x[height - 1][0] * x[height - 1][1]);
+      if(x[NT-1][1] == x[NT-2][0]){
+        return x[i][j]*(4*x[NT-1][0]*x[NT-1][1]);
       }
       else return 0;
     }
-    else if(j == width - 1){
-      if(x[height - 1][width - 2] == x[height - 2][width - 1]){
-        return x[i][j] * (4 * x[height - 1][width - 2] * x[height - 1][width - 1]);
+    else if(j == NT-1){
+      if(x[NT-1][NT-2] == x[NT-2][NT-1]){
+        return x[i][j]*(4*x[NT-1][NT-2]*x[NT-1][NT-1]);
       }
       else return 0;
     }
     else{
-      if(x[height - 1][j - 1] + x[height - 1][j+1] + x[height - 2][j] > 1.0){
-        return x[i][j] * (x[height - 1][j - 1] + x[height - 1][j + 1] + x[height - 2][j] + 1.0);
+      if(x[NT-1][j-1] + x[NT-1][j+1] + x[NT-2][j] > 1.0){
+        return x[i][j]*(x[NT-1][j-1] + x[NT-1][j+1] + x[NT-2][j] + 1.0);
       }
-      return x[i][j] * (x[0][j - 1] + x[0][j + 1] + x[1][j] - 1.0);
+      return x[i][j]*(x[0][j-1] + x[0][j+1] + x[1][j] - 1.0);
     }
   }
   else if(j == 0){
-    if(x[i - 1][0] + x[i + 1][0] + x[i][1] > 1.0){
-      return x[i][j] * (x[i - 1][0] + x[i + 1][0] + x[i][1] + 1.0);
+    if(x[i-1][0] + x[i+1][0] + x[i][1] > 1.0){
+      return x[i][j]*(x[i-1][0] + x[i+1][0] + x[i][1] + 1.0);
     }
-    return x[i][j] * (x[i - 1][0] + x[i + 1][0] + x[i][1] - 1.0);
+    return x[i][j]*(x[i-1][0] + x[i+1][0] + x[i][1] - 1.0);
   }
-  else if(j == width - 1){
-    if(x[i - 1][width - 1] + x[i + 1][width - 1] + x[i][width - 2] > 1.0){
-      return x[i][j] * (x[i - 1][width - 1] + x[i + 1][width - 1] + x[i][width - 2] + 1.0);
+  else if(j == NT-1){
+    if(x[i-1][NT-1] + x[i+1][NT-1] + x[i][NT-2] > 1.0){
+      return x[i][j]*(x[i-1][NT-1] + x[i+1][NT-1] + x[i][NT-2] + 1.0);
     }
-    return x[i][j] * (x[i - 1][width - 1] + x[i + 1][width - 1] + x[i][width - 2] - 1.0);
+    return x[i][j]*(x[i-1][NT-1] + x[i+1][NT-1] + x[i][NT-2] - 1.0);
   }
-  return x[i][j] * (x[i - 1][j] + x[i + 1][j] + x[i][j - 1] + x[i][j + 1]);
+  return x[i][j]*(x[i-1][j] + x[i+1][j] + x[i][j-1] + x[i][j+1]);
 }
 
-double gaussian(double **x, double **y, unsigned int i, unsigned int j){
-  //return -0.42*(y[i][j] - x[i][j])*(y[i][j] - x[i][j]);
-  return beta_max*y[i][j]*x[i][j];
+double gaussian(double x[NT][NT], double y[NT][NT], int i, int j){
+  //return y[i][j]*x[i][j];
+  return y[i][j]*x[i][j];
 }
 
-double energy(double **x, double **y, int i, int j, double beta, int height, int width){
-  return beta*gamma*gaussian(x, y, i, j) + beta*ising(x, i, j, height, width);
+double energy(double x[NT][NT], double y[NT][NT], int i, int j, double beta, double gamma){
+  return beta*gamma*gaussian(x, y, i, j) + beta*ising(x, i, j);
   //return (-gaussian(x, y, i, j) - beta*gamma*ising(x, i, j));
 }
 
 int main(int argc, char* argv[]){
+  //Initialize vectors and important values
+  double x[NT][NT];
+  double y[NT][NT];
+  double avg[NT][NT];
+  double d_action;
+  double temp;
+  double naccept;
+  double nreject;
+
   ////////*******NEED TO WRITE I/O CODE HERE********////////
   if( argc != 4 ) {
     printf("Invalid number of arguments! Please try running again.\n");
     return 0;
   }
 
-  // step size to reduce beta
   int nbeta = atoi(argv[1]);
-  unsigned int height, width;
+  double gamma = atof(argv[2]);
 
-
-  // read original image (data file)
-  int miao;  // just try to get rid of warnings;
-  FILE *original = fopen(argv[3], "r");
-  miao = fscanf(original, "%u,%u\n", &height, &width);
-  double **origin = (double **)malloc(height * sizeof(double*));
-  for(unsigned int i = 0; i < height; i++){
-    origin[i] = (double*)malloc(width * sizeof(double));
-    for(unsigned int j = 0; j < width; j++){
-      miao = fscanf(original, "%lf", &origin[i][j]);
-    }
-  }
-  fclose(original);
-
-  // read data from file
-  FILE *f = fopen(argv[2], "r");
-
-
-  // first line is the dimension of the images
-  miao = fscanf(f, "%u,%u\n", &height, &width);
-
-
-  // Initialize vectors and important values
-  // Allocate memory for x, y and avg
-  double **blaizeFavoriteRestoredImage = (double **)malloc(height * sizeof(double*));
-  double **x = (double**)malloc(height * sizeof(double*));
-  double **y = (double**)malloc(height * sizeof(double*));
-  double **avg = (double**)malloc(height * sizeof(double*));
-  double d_action;
-  double temp;
-  double naccept;
-  double nreject;
-  unsigned int LeastMissThatYouNeverHave = height * width;
-
-  for(int i = 0; i < height; ++i) {
-    x[i] = (double*)malloc(width * sizeof(double));
-    y[i] = (double*)malloc(width * sizeof(double));
-    avg[i] = (double*)malloc(width * sizeof(double));
-    blaizeFavoriteRestoredImage[i] = (double*)malloc(width * sizeof(double));
-    for(int j = 0; j < width; ++j) {
-      miao = fscanf(f, "%lf ", &y[i][j]);
+  FILE *f = fopen(argv[3], "r");
+  for(unsigned int i = 0; i < NT; ++i) {
+    for(unsigned int j = 0; j < NT; ++j) {
+      fscanf(f, "%lf,\r\n", &y[i][j]);
     }
   }
   fclose(f);
 
   //Start X in noisy configuration Y
-  for(int i = 0; i < height; i++){
-    for(int j = 0; j < width; j++){
+  for(int i = 0; i < NT; i++){
+    for(int j = 0; j < NT; j++){
       x[i][j] = y[i][j];
-      blaizeFavoriteRestoredImage[i][j] = y[i][j];
       avg[i][j] = 0.0;
     }
   }
 
   //Monte Carlo Measurement Sweeps
-  double beta = beta_max / nbeta;
-  double bestBetaThatYouNeverHave = beta;
+  double beta = beta_max/nbeta;
   for(int count = 0; count < nbeta; count++){
     naccept = 0.0;
     nreject = 0.0;
-    //Flip pixel spins and accept/reject based on relative actions.
-    for(int i = 0; i < height; i++){
-      for(int j = 0; j < width; j++){
-        x[i][j] *= -1.0;
-        d_action = energy(x, y, i, j, beta, height, width);
-        x[i][j] *= -1.0;
-        d_action -= energy(x, y, i, j, beta, height, width);
-        if(d_action > 0 || exp(d_action) > genrand()){
-        //if(d_action < 0 || exp(-d_action) > genrand()){
-          x[i][j] *= -1.0;
-          naccept += 1.0;
-        }
-        else nreject += 1.0;
-      }
-    }
+
+    //Paste print code here for movie making
     /*
-    double weight = 0;
-    for(int i = 1; i < NT-1; i++){
-      for(int j = 1; j < NT-1; j++){
-        weight += energy(x,y,i,j,1.0);
+    for(int i = 0; i < NT; i++){
+      for(int j = 0; j < NT; j++){
+        if(x[i][j] > 0.0){
+          printf("%12.6f", 1.0);
+        }
+        else if(x[i][j] < 0.0){
+          printf("%12.6f", -1.0);
+        }
+        else printf("%12.6f", y[i][j]);
       }
+      printf("\n");
     }
     */
-    unsigned int tempMiss = 0;
-    for(int i = 0; i < height; i++){
-      for(int j = 0; j < width; j++){
-        //avg[i][j] += x[i][j]; //exp(-weight)*x[i][j];
-        avg[i][j] += beta * x[i][j];
-        if(x[i][j] != origin[i][j])
-          tempMiss++;
-      }
-    }
-    if(tempMiss < LeastMissThatYouNeverHave){
-      LeastMissThatYouNeverHave = tempMiss;
-      bestBetaThatYouNeverHave = beta;
-      for(unsigned int i = 0; i < height; i++){
-        for(unsigned int j = 0; j < width; j++){
-          blaizeFavoriteRestoredImage[i][j] = x[i][j];
+
+    //Flip pixel spins and accept/reject based on relative actions.
+    for(int outer = 0; outer < 1; outer++){
+      for(int i = 0; i < NT; i++){
+        for(int j = 0; j < NT; j++){
+          x[i][j] *= -1.0;
+          d_action = energy(x,y,i,j,beta,gamma);
+          x[i][j] *= -1.0;
+          d_action -= energy(x,y,i,j,beta,gamma);
+          if(d_action > 0 || exp(d_action) > genrand()){
+            x[i][j] *= -1.0;
+            naccept += 1.0;
+          }
+          else nreject += 1.0;
         }
       }
     }
-    printf("%12.6f", naccept / (naccept + nreject));
-    beta += beta_max / nbeta;
+    beta += beta_max/nbeta;
+
+    //Uncomment to track acceptance rate
+    printf("%12.6f", naccept/(naccept + nreject));
   }
   printf("\n");
 
   //Print most likely image
-  for(int i = 0; i < height; i++){
-    for(int j = 0; j < width; j++){
-      //if(avg[i][j]/(measure/100.0) > 0.0){
-      //if(avg[i][j] > 0.0){
-      //  printf("%12.6f", 1.0);
-      //}
-      //else if(avg[i][j] < 0.0){
-      //  printf("%12.6f", -1.0);
-      //}
-      //else printf("%12.6f", y[i][j]);
-      printf("%12.6f", blaizeFavoriteRestoredImage[i][j]);
+  for(int i = 0; i < NT; i++){
+    for(int j = 0; j < NT; j++){
+      if(x[i][j] > 0.0){
+        printf("%12.6f", 1.0);
+      }
+      else if(x[i][j] < 0.0){
+        printf("%12.6f", -1.0);
+      }
+      else printf("%12.6f", y[i][j]);
     }
     printf("\n");
   }
-  printf("%u, %12.6f\n", LeastMissThatYouNeverHave, bestBetaThatYouNeverHave);
 
-
-  //  free the memory allocated
-  for(int i = 0; i < height; i++){
-    free(x[i]);
-    free(y[i]);
-    free(avg[i]);
-    free(origin[i]);
-  }
-  free(x);
-  free(y);
-  free(avg);
-  free(origin);
   return 1;
 }

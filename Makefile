@@ -26,17 +26,17 @@ ifndef $(IMAGE)
 endif
 
 # define the division value of black and white
-ifdef rate
-	rate = 0.44
+ifdef gamma
+	gamma = 1.6
 endif
 
 # set the number of iterations
-ifndef itr
-	itr = 10000
+ifndef nbeta
+	nbeta = 1000
 endif
 
-BIN = noise.dat
-OUTPUTDATA = restore.dat
+BIN = spin.dat
+OUTPUTDATA = restored.txt
 
 # choose to use python or matlab to binarize and convert data file back to image
 # Use python when P is set, otherwise use Matlab
@@ -48,21 +48,7 @@ default: restore
 
 restore: $(OBJECT)
 	$(COMPILER) $(OBJECT) $(CFLAGS) $(LIBRARY) -o ising.o
-
-pyrestore: $(OBJECT)
-	$(COMPILER) $(OBJECT) $(CFLAGS) $(LIBRARY) -o ising.o
-	python $(SC)binarize.py $(IMAGE) $(rate)
-	./ising.o $(itr) $(BIN) > $(OUTPUTDATA)
-	python $(SC)restore.py $(OUTPUTDATA)
-
-test: $(SC)test.c
-	$(COMPILER) $(SC)test.c $(CFLAGS) $(LIBRARY) -o test.o
+	./ising.o $(nbeta) $(gamma) $(BIN) > $(OUTPUTDATA)
 
 clean:
 	$(RM) *.o *.txt *.dat
-
-cld:
-	$(RM) *.txt *.dat
-
-ri:
-	$(RM) *.jpg *.png *.jpeg *.JPG *.JPEG *.bmp *.gif
